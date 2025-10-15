@@ -1,12 +1,7 @@
-import random  # used to generate random numbers
+  
 
-print("Welcome to the Number Guessing Game!")
-
-# Step 1: Generate a random number between 1 and 10
-secret_num = random.randint(1, 10)  
-
-# from getpass import getpass  
-# secret_number = int (getpass("player 1,enter the secret numbet(hidden):"))
+from getpass import getpass  
+secret_num = int (getpass("player 1,enter the secret numbet(hidden):"))
     
 # Step 2: Initialize variables
 guess = 0
