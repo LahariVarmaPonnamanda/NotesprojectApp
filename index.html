@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Notes App with Dark Mode</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      margin: 0;
+      background: #f2f2f2;
+      transition: 0.3s;
+    }
+
+    /* --- DARK MODE --- */
+    body.dark {
+      background: #1f1f1f;
+      color: white;
+    }
+
+    body.dark #notesArea,
+    body.dark #sidebar,
+    body.dark .noteCard {
+      background: #2a2a2a;
+      color: white;
+      border-color: #444;
+    }
+
+    #container {
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    #sidebar {
+      width: 200px;
+      background: white;
+      padding: 10px;
+      border-radius: 6px;
+      transition: 0.3s;
+    }
+
+    /* Category Buttons - Updated */
+    .catBtn {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 8px;
+      background: #e0e0e0;       /* Grey background */
+      color: #0044cc;            /* Blue font */
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    .catBtn:hover {
+      opacity: 0.8;
+    }
+
+    body.dark .catBtn {
+      background: #3a3a3a;
+      color: #7ab0ff;
+    }
+
+    #notesArea {
+      flex: 1;
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      transition: 0.3s;
+    }
+
+    .noteCard {
+      border: 1px solid #ccc;
+      background: white;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      transition: 0.3s;
+    }
+
+    .btn {
+      padding: 7px 14px;
+      background: black;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 3px;
+    }
+
+    /* Dark mode button */
+    #darkToggle {
+      background: #444;
+      color: white;
+      float: right;
+      margin-right: 20px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+      border-radius: 4px;
+      border: 1px solid #999;
+    }
+
+    #modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #modalBox {
+      width: 320px;
+      background: white;
+      padding: 20px;
+      border-radius: 6px;
+      transition: 0.3s;
+    }
+
+    body.dark #modalBox {
+      background: #2b2b2b;
+      color: white;
+    }
+
+    .badge {
+      background: #ffecb3;
+      padding: 3px 6px;
+      border-radius: 3px;
+      margin-left: 5px;
+      font-size: 12px;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: #666;
+    }
+
+    body.dark .meta {
+      color: #aaa;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<h2 style="text-align:center; padding:10px;">
+  Notes App  
+  <button id="darkToggle" class="btn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+</h2>
+
+<div id="container">
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <h3>Categories</h3>
+
+    <button class="btn" onclick="openModal()">+ Add Note</button><br><br>
+
+    <button class="catBtn" onclick="filterNotes('All')">All Notes</button>
+    <button class="catBtn" onclick="filterNotes('Work')">Work</button>
+    <button class="catBtn" onclick="filterNotes('Personal')">Personal</button>
+    <button class="catBtn" onclick="filterNotes('Other')">Other</button>
+  </div>
+
+  <!-- Notes Area -->
+  <div id="notesArea">
+    <h3 id="heading">All Notes</h3>
+    <div id="notesList"></div>
+  </div>
+</div>
+
+<!-- Modal Box -->
+<div id="modal">
+  <div id="modalBox">
+    <h3 id="modalTitle">Add Note</h3>
+
+    <input type="hidden" id="editId">
+
+    <label>Title</label>
+    <input type="text" id="noteTitle">
+
+    <label>Description</label>
+    <textarea id="noteDesc"></textarea>
+
+    <label>Category</label>
+    <select id="noteCat">
+      <option>Work</option>
+      <option>Personal</option>
+      <option>Other</option>
+    </select>
+
+    <div style="text-align:right;">
+      <button class="btn" onclick="saveNote()">Save</button>
+      <button class="btn" style="background:gray;" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let notes = JSON.parse(localStorage.getItem("notesData")) || [];
+  let activeCategory = "All";
+
+  /* ---------------- DARK MODE ---------------- */
+  function applyDarkMode() {
+    if (localStorage.getItem("darkMode") === "on") {
+      document.body.classList.add("dark");
+      document.getElementById("darkToggle").innerText = "☀ Light Mode";
+    }
+  }
+
+  function toggleDarkMode() {
+    const dark = document.body.classList.toggle("dark");
+    localStorage.setItem("darkMode", dark ? "on" : "off");
+    document.getElementById("darkToggle").innerText = dark ? "☀ Light Mode" : "🌙 Dark Mode";
+  }
+
+  applyDarkMode();
+
+  /* ---------------- MODAL ---------------- */
+  const openModal = () => {
+    document.getElementById("modal").style.display = "flex";
+    document.getElementById("modalTitle").innerText = "Add Note";
+    document.getElementById("editId").value = "";
+    document.getElementById("noteTitle").value = "";
+    document.getElementById("noteDesc").value = "";
+    document.getElementById("noteCat").value = "Work";
+  };
+
+  const closeModal = () => {
+    document.getElementById("modal").style.display = "none";
+  };
+
+  /* ---------------- SAVE NOTE ---------------- */
+  function saveNote() {
+    let title = noteTitle.value.trim();
+    let desc = noteDesc.value.trim();
+    let cat = noteCat.value;
+    let editId = editIdInput.value;
+
+    if (!title || !desc) return alert("Please fill all fields.");
+
+    if (editId) {
+      let n = notes.find(x => x.id == editId);
+      if (n) {
+        n.title = title;
+        n.desc = desc;
+        n.category = cat;
+        n.date = new Date().toLocaleString();
+      }
+    } else {
+      notes.push({
+        id: Date.now(),
+        title,
+        desc,
+        category: cat,
+        date: new Date().toLocaleString()
+      });
+    }
+
+    localStorage.setItem("notesData", JSON.stringify(notes));
+    closeModal();
+    renderNotes(activeCategory);
+  }
+
+  /* ---------------- EDIT NOTE ---------------- */
+  function editNote(id) {
+    let n = notes.find(e => e.id === id);
+    if (!n) return;
+
+    openModal();
+    modalTitle.innerText = "Edit Note";
+    editId.value = id;
+    noteTitle.value = n.title;
+    noteDesc.value = n.desc;
+    noteCat.value = n.category;
+  }
+
+  /* ---------------- DELETE NOTE ---------------- */
+  function deleteNote(id) {
+    if (!confirm("Delete this note?")) return;
+    notes = notes.filter(n => n.id !== id);
+    localStorage.setItem("notesData", JSON.stringify(notes));
+    renderNotes(activeCategory);
+  }
+
+  /* ---------------- LIST RENDER ---------------- */
+  function filterNotes(cat) {
+    renderNotes(cat);
+  }
+
+  function renderNotes(cat) {
+    activeCategory = cat;
+    notesList.innerHTML = "";
+    heading.innerText = cat + " Notes";
+
+    let filtered = cat === "All" ? notes : notes.filter(n => n.category === cat);
+
+    // Duplicate title detection
+    let titleCount = {};
+    filtered.forEach(n => {
+      let base = n.title.trim();
+      titleCount[base] = (titleCount[base] || 0) + 1;
+    });
+
+    filtered.forEach(n => {
+      let card = document.createElement("div");
+      card.className = "noteCard";
+
+      let duplicateBadge = titleCount[n.title] > 1 ? "<span class='badge'>Duplicate</span>" : "";
+
+      card.innerHTML = `
+        <strong>${n.title}</strong> ${duplicateBadge}
+        <div>${n.desc}</div>
+        <div class="meta">Category: ${n.category} | ${n.date}</div>
+      `;
+
+      let editBtn = document.createElement("button");
+      editBtn.className = "btn";
+      editBtn.innerText = "Edit";
+      editBtn.onclick = () => editNote(n.id);
+
+      let delBtn = document.createElement("button");
+      delBtn.className = "btn";
+      delBtn.style.background = "red";
+      delBtn.innerText = "Delete";
+      delBtn.onclick = () => deleteNote(n.id);
+
+      card.appendChild(editBtn);
+      card.appendChild(delBtn);
+      notesList.appendChild(card);
+    });
+
+    if (!filtered.length) notesList.innerHTML = "<p>No notes in this category.</p>";
+  }
+
+  renderNotes("All");
+</script>
+
+</body>
+</html>
